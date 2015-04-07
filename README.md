@@ -1,2 +1,3 @@
-# docker-containers
-Collection of docker containers
+# Docker containers
+
+A collection of docker containers
