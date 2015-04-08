@@ -1,66 +1,62 @@
-# lnmpa-apache
+# Automated build of Apache with Docker
 
-lnmpa-apache is an Apache Server boxed in a Docker image built by [TommyLau ](http://tommy.net.cn/).
+ - Master and Debian branches are based on [Debian official repository](https://index.docker.io/_/debian/)
 
-## What is in this image?
+### Apache environment variables
+Apache will make of the following environment variables.
 
-This image is a php web development environment cooked based on the official docker image `php:apache`, and with the following enhancements.
+	APACHE_SERVERADMIN=admin@localhost
+	APACHE_SERVERNAME=localhost
+	APACHE_SERVERALIAS=docker.localhost
+	APACHE_DOCUMENTROOT=/var/www
+	APACHE_RUN_USER=www-data
+	APACHE_RUN_GROUP=www-data
+	APACHE_LOG_DIR=/var/web/log/apache2
+	APACHE_PID_FILE=/var/run/apache2.pid
+	APACHE_RUN_DIR=/var/run/apache2
+	APACHE_LOCK_DIR=/var/lock/apache2
 
-**WARNING:** The `php.ini` is set to development, it is highly recommended **NOT** to run this image for production environments.
 
-Fixed:
+### Use the pre built image
+The pre built image can be downloaded using docker directly. After that you do not need to use this command again, you will have the image on your machine.
 
-- Fixed docker-php-ext-install script error while checking ext-module.ini
+	$ sudo docker pull jacksoncage/apache
 
-Enabled:
 
-- Enabled Apache2 rewrite module
-- Enabled GD support with GIF, JPEG, PNG, WBMP, XBM and FreeType(TrueType Fonts)
-- Enabled LDAP support
-- Enabled mbstring
-- Enabled mcrypt
-- Enabled mysql
-- Enabled mysqli
-- Enabled pdo_mysql
-- Enabled zip
+### Build the docker image by yourself
+If you prefer you can easily build the docker image by yourself. After this the image is ready for use on your machine and can be used for multiple starts.
 
-Other:
+	$ cd apache-docker
+	$ sudo docker build -t jacksoncage/apache .
 
-- Switch system and php timezone to **Europe/Paris**
-- Support boot2docker permissions fix with `-v` argument
 
-## How to use this image
+### Start the container
+The container has all pre requisites set up to run any apache application. Specify all needed environment variables.
 
-### Single instance mode
+	$ sudo docker run -i -d -p 80 -e APACHE_SERVERNAME=jacksoncage.se  -v `pwd`/www:/var/www:ro jacksoncage/apache
 
-Get the docker image by running the following commands:
+Trying the browser on url http://localhost:80.
 
-```bash
-docker pull tommylau/apache
-```
 
-Start an instance:
+#### Start the container and keep control
+The command above starts the container in deamon mode (-d) and runs in the background. If you want to start it by yourself just to see what happens use this command:
 
-```bash
-docker run --name apache -v /path/to/web:/var/www/html -p 80:80 -d tommylau/apache
-```
+	$ sudo docker run -i -t -p 80 -e APACHE_SERVERNAME=jacksoncage.se -v `pwd`/www:/var/www:ro jacksoncage/apache bash
 
-This will start an instance, and you are ready to go.
+Notice the two changes made here, first we replaced the deamon switch (-d) with the tty switch (-t) which pipes the std in and std out to your terminal.
 
-### Boot2Docker under Mac OS or Windows
+You now end up as a root user in the docker container and can do simple things like ls, cd and more. More complex things can be achieved after a `apt-get install` of one or more software(s) of choice.
 
-If you are running [boot2docker](https://github.com/boot2docker/boot2docker) under MacOS or Windows, it is a good idea to add `BOOT2DOCKER=1` as an environment variable. In this way, Apache2 will run under user `docker` (uid 1000) and group `staff` (gid 50), so that PHP won't complain about the permission denied when you try to write something to the disk through PHP, like say, upload an image to server.
+### Get the container ip and port
+The first command inspects your created container and get the IPv4 address. Second command docker exported port for 8080.
 
-```bash
-docker run --name apache -v /path/to/web:/var/www/html -p 80:80 -e BOOT2DOCKER=1 -d tommylau/apache
-```
+    $ sudo docker inspect <container_id> | grep IPAddress | cut -d '"' -f 4
+    $ sudo docker port <container_id> 80 | cut -d ":" -f2
 
-### Linking with other containers
+Now go to `<your container's ip>:<container's port>` in your browser
 
-To use this image linking with MySQL, you have to have a running MySQL instance, more information about MySQL docker image, please refer to [tommylau/mysql](https://registry.hub.docker.com/u/tommylau/mysql/). Suppose you have a MySQL instance named **mysql5.6_server**, we can link it in our Apache2 instance with the name **mysql** like this:
 
-```bash
-docker run --name apache -v /path/to/web:/var/www/html --link mysql5.6_server:mysql -p 80:80 -d tommylau/apache
-```
+### Stop the container
+Stopping a running container is possible via the docker api. If only one instance of this container is running this command will stop it:
 
-Then in the instance, you can use the hostname `mysql` to connect to the database.
+	$ sudo docker stop `sudo docker ps |grep jacksoncage/apache |cut -d\  -f1`
