@@ -95,9 +95,7 @@ sed -ie 's/register_argc_argv\ =\ On/register_argc_argv\ =\ Off/g' /usr/local/et
 sed -ie 's/magic_quotes_gpc\ =\ On/magic_quotes_gpc\ =\ Off/g' /usr/local/etc/php/php.ini
 
 WORKDIR /var/www
-
-RUN mkdir -p /data
-VOLUME ["/data"]
+VOLUME ["/var/www"]
 
 # Run php-fpm
 EXPOSE 9000
